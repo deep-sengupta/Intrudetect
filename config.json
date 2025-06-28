@@ -1,0 +1,6 @@
+{
+  "MODE": "detect",
+  "LOG_FILE": "logs/requests.json",
+  "ANOMALY_FILE": "logs/anomalies.json",
+  "BASELINE_FILE": "logs/baseline.json"
+}

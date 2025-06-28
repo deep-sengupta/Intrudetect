@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" class="min-h-screen">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WAF Security Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://unicons.iconscout.com/release/v4.0.8/css/line.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                fontFamily: {
+                    sans: ['"Inter"', 'sans-serif']
+                },
+                extend: {
+                    keyframes: {
+                        pop: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        }
+                    },
+                    animation: {
+                        pop: 'pop 0.5s ease forwards'
+                    },
+                    colors: {
+                        primary: '#0ea5e9',
+                        dark: '#0f172a',
+                        card: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .transition-all-smooth {
+            transition: all 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-white via-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 text-gray-900 dark:text-gray-100 font-sans min-h-screen flex flex-col transition-all duration-300">
+    <div class="w-full max-w-7xl mx-auto px-6 py-8 flex-1">
+        <div class="flex justify-between items-center mb-10">
+            <div class="flex items-center gap-3">
+                <i class="uil uil-shield-check text-4xl text-sky-500"></i>
+                <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-teal-400">WAF Security Dashboard</h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <i id="theme-icon" class="uil uil-moon text-2xl transition-all duration-300"></i>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="dark-toggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-300 dark:bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-10">
+            <div class="bg-white dark:bg-card rounded-xl p-5 shadow-lg hover:shadow-xl animate-pop delay-[100ms] opacity-0 transition-all-smooth">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="uil uil-chart-line text-blue-500 text-2xl"></i>
+                    <p class="text-sm text-gray-500 dark:text-gray-300 animate-pop">Requests</p>
+                </div>
+                <p class="text-3xl font-bold" id="requests-count">0</p>
+            </div>
+            <div class="bg-white dark:bg-card rounded-xl p-5 shadow-lg hover:shadow-xl animate-pop delay-[200ms] opacity-0 transition-all-smooth">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="uil uil-users-alt text-teal-500 text-2xl"></i>
+                    <p class="text-sm text-gray-500 dark:text-gray-300 animate-pop">Visitors</p>
+                </div>
+                <p class="text-3xl font-bold" id="visitors-count">0</p>
+            </div>
+            <div class="bg-white dark:bg-card rounded-xl p-5 shadow-lg hover:shadow-xl animate-pop delay-[300ms] opacity-0 transition-all-smooth">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="uil uil-location-point text-purple-500 text-2xl"></i>
+                    <p class="text-sm text-gray-500 dark:text-gray-300 animate-pop">Request IPs</p>
+                </div>
+                <p class="text-3xl font-bold" id="requests-ip-count">0</p>
+            </div>
+            <div class="bg-white dark:bg-card rounded-xl p-5 shadow-lg hover:shadow-xl animate-pop delay-[400ms] opacity-0 transition-all-smooth">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="uil uil-shield-exclamation text-red-500 text-2xl"></i>
+                    <p class="text-sm text-gray-500 dark:text-gray-300 animate-pop">Blocked</p>
+                </div>
+                <p class="text-3xl font-bold text-red-500" id="blocked-count">0</p>
+            </div>
+            <div class="bg-white dark:bg-card rounded-xl p-5 shadow-lg hover:shadow-xl animate-pop delay-[500ms] opacity-0 transition-all-smooth">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="uil uil-server-network text-green-500 text-2xl"></i>
+                    <p class="text-sm text-gray-500 dark:text-gray-300 animate-pop">IP Addresses</p>
+                </div>
+                <p class="text-3xl font-bold" id="ip-addr-count">0</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-card rounded-xl p-6 shadow-lg transition-all-smooth">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i class="uil uil-graph-bar text-sky-500"></i> Traffic Over Time</h2>
+                <div class="w-full h-64">
+                    <canvas id="trafficChart" class="w-full h-full"></canvas>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-card rounded-xl p-6 shadow-lg transition-all-smooth">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i class="uil uil-chart-pie-alt text-pink-500"></i> Response Status</h2>
+                <div class="flex flex-col items-center">
+                    <div class="w-[240px] h-[240px] mb-4">
+                        <canvas id="responseChart" width="240" height="240"></canvas>
+                    </div>
+                    <div class="flex flex-wrap gap-[1rem] justify-center text-sm">
+                        <div class="flex items-center gap-1.5 animate-pop"><span class="w-3 h-3 rounded-full bg-emerald-500"></span><span>200</span></div>
+                        <div class="flex items-center gap-1.5 animate-pop"><span class="w-3 h-3 rounded-full bg-sky-500"></span><span>403</span></div>
+                        <div class="flex items-center gap-1.5 animate-pop"><span class="w-3 h-3 rounded-full bg-yellow-400"></span><span>404</span></div>
+                        <div class="flex items-center gap-1.5 animate-pop"><span class="w-3 h-3 rounded-full bg-rose-500"></span><span>401</span></div>
+                        <div class="flex items-center gap-1.5 animate-pop"><span class="w-3 h-3 rounded-full bg-indigo-500"></span><span>302</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-card rounded-xl p-6 shadow-lg transition-all-smooth">
+                <h2 class="text-xl font-semibold mb-4 flex items-center gap-2"><i class="uil uil-desktop-cloud-alt text-orange-500"></i> User Clients</h2>
+                <div class="flex items-center justify-center gap-6">
+                    <div class="flex flex-col gap-[1rem] text-sm">
+                        <div class="flex items-center gap-2 animate-pop"><span class="w-3 h-3 rounded-full bg-blue-500"></span><span>Chrome</span></div>
+                        <div class="flex items-center gap-2 animate-pop"><span class="w-3 h-3 rounded-full bg-violet-500"></span><span>Unknown</span></div>
+                        <div class="flex items-center gap-2 animate-pop"><span class="w-3 h-3 rounded-full bg-yellow-500"></span><span>Firefox</span></div>
+                        <div class="flex items-center gap-2 animate-pop"><span class="w-3 h-3 rounded-full bg-red-500"></span><span>Yandex</span></div>
+                        <div class="flex items-center gap-2 animate-pop"><span class="w-3 h-3 rounded-full bg-green-500"></span><span>Safari</span></div>
+                    </div>
+                    <div class="w-[240px] h-[240px]">
+                        <canvas id="userClientChart" width="240" height="240"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="mt-auto w-full py-4 text-center text-sm text-gray-400 dark:text-gray-600">
+        © 2025 WAF Secure | Anomaly Detection Firewall
+    </footer>
+
+    <script>
+        const toggle = document.getElementById('dark-toggle');
+        const icon = document.getElementById('theme-icon');
+        const html = document.documentElement;
+        function setTheme(mode) {
+            html.classList.toggle('dark', mode === 'dark');
+            localStorage.setItem('theme', mode);
+            icon.className = mode === 'dark' ? 'uil uil-sun text-2xl transition-all duration-300' : 'uil uil-moon text-2xl transition-all duration-300';
+        }
+        toggle.addEventListener('change', () => {
+            setTheme(toggle.checked ? 'dark' : 'light');
+        });
+        if (localStorage.getItem('theme') === 'dark') {
+            toggle.checked = true;
+            html.classList.add('dark');
+            icon.className = 'uil uil-sun text-2xl transition-all duration-300';
+        }
+        let trafficChart, responseChart, userClientChart;
+        async function updateStats() {
+            const logsRes = await fetch('/api/logs');
+            const anomalyRes = await fetch('/api/anomalies');
+            const logs = await logsRes.json();
+            const anomalies = await anomalyRes.json();
+            const requests = logs.length;
+            const visitors = new Set(logs.map(l => l.ip)).size;
+            const requestsIP = new Set(logs.map(l => l.headers?.['X-Forwarded-For'] || l.ip)).size;
+            const blocked = anomalies.length;
+            const ipAddrs = new Set(logs.map(l => l.ip)).size;
+            document.getElementById("requests-count").textContent = requests;
+            document.getElementById("visitors-count").textContent = visitors;
+            document.getElementById("requests-ip-count").textContent = requestsIP;
+            document.getElementById("blocked-count").textContent = blocked;
+            document.getElementById("ip-addr-count").textContent = ipAddrs;
+            const timeSeries = logs.map(l => l.timestamp?.split('T')[0]);
+            const dateCount = {};
+            timeSeries.forEach(d => { dateCount[d] = (dateCount[d] || 0) + 1; });
+            const dates = Object.keys(dateCount);
+            const values = Object.values(dateCount);
+            if (trafficChart) trafficChart.destroy();
+            trafficChart = new Chart(document.getElementById("trafficChart"), {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Requests',
+                        data: values,
+                        fill: true,
+                        borderColor: '#0ea5e9',
+                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' } },
+                        y: { ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+            const statusCount = {};
+            logs.forEach(log => {
+                const status = log.status || 200;
+                statusCount[status] = (statusCount[status] || 0) + 1;
+            });
+            const chartLabels = ['200', '403', '404', '401', '302'];
+            const chartColors = {
+                '200': '#10b981',
+                '403': '#0ea5e9',
+                '404': '#facc15',
+                '401': '#f43f5e',
+                '302': '#6366f1'
+            };
+            const chartData = chartLabels.map(status => statusCount[status] || 0);
+            const chartColorList = chartLabels.map(status => chartColors[status]);
+            if (responseChart) responseChart.destroy();
+            responseChart = new Chart(document.getElementById("responseChart"), {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: chartColorList,
+                        hoverOffset: 15,
+                        cutout: '60%',
+                        rotation: 270,
+                        radius: '80%',
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+            const userAgentCount = { Chrome: 0, Unknown: 0, Firefox: 0, Yandex: 0, Safari: 0 };
+            logs.forEach(log => {
+                const agent = (log.headers?.['User-Agent'] || '').toLowerCase();
+                if (agent.includes('chrome') && !agent.includes('edg')) userAgentCount.Chrome++;
+                else if (agent.includes('firefox')) userAgentCount.Firefox++;
+                else if (agent.includes('yabrowser')) userAgentCount.Yandex++;
+                else if (agent.includes('safari') && !agent.includes('chrome')) userAgentCount.Safari++;
+                else userAgentCount.Unknown++;
+            });
+            const userClientsLabels = ['Chrome', 'Unknown', 'Firefox', 'Yandex', 'Safari'];
+            const userClientsColors = ['#3b82f6', '#8b5cf6', '#facc15', '#ef4444', '#10b981'];
+            const userClientsData = userClientsLabels.map(agent => userAgentCount[agent]);
+            if (userClientChart) userClientChart.destroy();
+            userClientChart = new Chart(document.getElementById("userClientChart"), {
+                type: 'doughnut',
+                data: {
+                    labels: userClientsLabels,
+                    datasets: [{
+                        data: userClientsData,
+                        backgroundColor: userClientsColors,
+                        hoverOffset: 15,
+                        cutout: '60%',
+                        rotation: 270,
+                        radius: '80%',
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+        updateStats();
+        setInterval(updateStats, 10000);
+    </script>
+
+</body>
+</html>
